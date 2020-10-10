@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire Game</title>
+</head>
+
+<style>
+  #gamearea{
+    border: 1px solid black;
+    width:500px;
+    height:400px;
+  }
+</style>
+<body>
+
+  <div id="gamearea">
+
+  </div>
+
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/7.23.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.23.0/firebase-database.js"></script>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+
+<script>
+  const characters = [
+    "🐶",
+    "🐱",
+    "👺",
+    "👽",
+    "👾",
+    "🤖",
+    "🎃",
+    "💀",
+    "👻",
+    "🤡"
+  ]
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "",
+    authDomain: "",
+    databaseURL: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: ""
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  let dataRef = firebase.database();
+
+  // Create random details for new player
+  let char = Math.round((Math.random() * characters.length));
+  console.log(`char i: ${char}`);
+
+  let x = Math.round((Math.random() * 500));
+  let y = Math.round((Math.random() * 400));
+
+  // Create new player
+  let player = dataRef.ref().push({
+    name: "Eric",
+    email: "email@email.net",
+    x_pos: x,
+    y_pos: y,
+    char_i: char,
+    dateAdded: firebase.database.ServerValue.TIMESTAMP
+  });
+  // When the player closes the browser tab, delete the player document in the database
+  player.onDisconnect().set({});
+
+  // Firebase watcher + initial loader HINT: This code behaves similarly to .on("value")
+  dataRef.ref().on("child_added", function(childSnapshot) {
+    let c = document.createElement("div");
+    c.innerHTML = characters[childSnapshot.val().char_i];
+    c.style.position = "absolute";
+    c.style.left = childSnapshot.val().x_pos + "px";
+    c.style.top = childSnapshot.val().y_pos; + "px";
+    c.setAttribute("id", childSnapshot.key)
+    let gameboard = document.querySelector("#gamearea");
+    gameboard.appendChild(c);
+  // Handle the errors
+  }, function(errorObject) {
+    console.log("Errors handled: " + errorObject.code);
+  });
+
+  dataRef.ref().on("child_removed", function(snap) {
+    // First remove the data from the DB
+    snap.getRef().onDisconnect().set({});
+
+    // Now remove the character from the screen
+    document.querySelector("#gamearea").removeChild(document.querySelector(`#${snap.key}`));
+  }, function(err) {
+    console.log(err);
+  })
+</script>
+    
+</body>
+</html>
